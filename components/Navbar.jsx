@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Navbar() {
   return (
-    <nav className="w-full fixed top-0 mb-6 z-50 backdrop-blur-lg bg-white/10 border-b border-white/20 shadow-md">
+    <nav className="w-full z-50 backdrop-blur-lg bg-white/10 border-b border-white/20 shadow-md">
       <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
         <Link href="/" className="text-2xl font-bold text-white hover:text-purple-300 transition-colors duration-200">
           BMG<span className="text-purple-400"> Quiz</span>
