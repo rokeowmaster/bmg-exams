@@ -8,7 +8,7 @@ export default function Navbar() {
           BMG<span className="text-purple-400"> Quiz</span>
         </Link>
 
-        <div className="space-x-6 hidden sm:flex">
+        {/* <div className="space-x-6 hidden sm:flex">
           <Link
             href="/about"
             className="text-white/80 hover:text-white transition duration-200 font-medium"
@@ -27,7 +27,7 @@ export default function Navbar() {
           >
             Sign In
           </Link>
-        </div>
+        </div> */}
       </div>
     </nav>
   );

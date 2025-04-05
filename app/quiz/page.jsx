@@ -30,6 +30,7 @@ export default function QuizPage() {
   const handleAnswer = (selected) => {
     const correct = currentQuestion.answer;
 
+    // Immediate score and feedback update
     if (selected === correct) {
       setScore((prev) => prev + 1);
       setTopicScore((prev) => prev + 1);
@@ -38,11 +39,11 @@ export default function QuizPage() {
       setFeedback(`❌ Incorrect! Correct answer: ${correct}`);
     }
 
+    // Batch state updates to avoid unnecessary re-renders
     setTimeout(() => {
       setFeedback("");
 
       const isLastQuestion = currentQuestionIndex === questions[topic].length - 1;
-
       if (isLastQuestion) {
         setShowTopicResult(true);
       } else {
@@ -61,14 +62,14 @@ export default function QuizPage() {
 
     const isLastTopic = currentTopicIndex === topics.length - 1;
     if (isLastTopic) {
-      localStorage.setItem("bmg-quiz-taken", "true"); // mark quiz as completed
+      localStorage.setItem("bmg-quiz-taken", "true");
       setQuizCompleted(true);
     } else {
       setCurrentTopicIndex((prev) => prev + 1);
       setCurrentQuestionIndex(0);
       setTopicScore(0);
       setShowTopicResult(false);
-      setTimerKey((prev) => prev + 1); // Reset Timer
+      setTimerKey((prev) => prev + 1);
     }
   };
 
@@ -144,7 +145,6 @@ export default function QuizPage() {
                 </button>
               ))}
             </div>
-            {/* {feedback && <p className="mt-4 font-semibold text-lg text-black">{feedback}</p>} */}
           </div>
         )}
       </div>
