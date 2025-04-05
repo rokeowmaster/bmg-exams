@@ -16,8 +16,8 @@ export default function Layout({ children }) {
             </h1>
 
             <p className="text-lg text-gray-200 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Test your skills on Computers, Microsoft Office, and Internet essentials.
-              Sign in and get started with sequential quizzes to earn your digital certificate!
+              Test your skills on Computers, Microsoft Office and Internet essentials.
+              Get started with sequential quizzes to earn your certificate!
             </p>
 
             <Link
