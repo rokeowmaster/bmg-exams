@@ -1,46 +1,34 @@
 "use client";
-import { ClerkProvider, RedirectToSignIn, useUser } from "@clerk/nextjs";
-import { useEffect, useState } from "react";
+
 import Navbar from "@/components/Navbar";
-import { useRouter } from "next/navigation";
-import { Auth } from "@/components";
 import Link from "next/link";
 
 export default function Layout({ children }) {
-  const [loading, setLoading] = useState(true);
-  const { isSignedIn } = useUser();
-  const router = useRouter();
-
-  // Wait for Clerk to be fully loaded
-  useEffect(() => {
-    setLoading(false);
-  }, []);
-
-  if (loading) {
-    return <p>Loading...</p>;
-  }
-
   return (
-    
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <div className="flex-1">
-          {isSignedIn ? (
-            <div className="p-6">
-              <div>
-                <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-white text-center p-4">
-                  <h1 className="text-4xl font-bold mb-4">Welcome to BMG Quiz</h1>
-                  <p className="mb-6 text-lg max-w-xl">Test your knowledge on Computers, Microsoft Office, and the Internet. Sign in to get started with sequential quizzes and earn your certificate!</p>
-                  <Auth />
-                  <Link href="/quiz" className="mt-6 inline-block bg-white text-purple-600 px-6 py-2 rounded-full text-lg font-semibold hover:bg-gray-200">Start Quiz</Link>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <RedirectToSignIn />
-          )}
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#1e1e2f] via-[#1b1b2d] to-[#0f0f1f] text-white">
+      <Navbar />
+
+      <div className="flex-1 flex items-center justify-center p-6">
+        <div className="w-full max-w-3xl mx-auto bg-white/10 backdrop-blur-lg rounded-3xl p-10 shadow-2xl border border-white/20 transition-all duration-300 ease-in-out hover:shadow-purple-500/30">
+          <div className="text-center">
+            <h1 className="text-5xl font-extrabold text-white drop-shadow-lg mb-6 animate-fade-in">
+              🚀 Welcome to <span className="text-purple-400">BMG Quiz</span>
+            </h1>
+
+            <p className="text-lg text-gray-200 mb-8 max-w-2xl mx-auto leading-relaxed">
+              Test your skills on Computers, Microsoft Office, and Internet essentials.
+              Sign in and get started with sequential quizzes to earn your digital certificate!
+            </p>
+
+            <Link
+              href="/quiz"
+              className="inline-block bg-purple-500 hover:bg-purple-600 text-white px-8 py-3 rounded-full text-lg font-semibold transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105"
+            >
+              Start Quiz
+            </Link>
+          </div>
         </div>
       </div>
-    
+    </div>
   );
 }

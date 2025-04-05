@@ -1,5 +1,4 @@
 import Navbar from "@/components/Navbar";
-import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -29,9 +28,9 @@ export default function RootLayout({ children }) {
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/brands.min.css" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans bg-gray-100`}>
-        <ClerkProvider publishableKey='pk_test_bWFueS1oZXJtaXQtNTYuY2xlcmsuYWNjb3VudHMuZGV2JA'>
+        {/* <ClerkProvider publishableKey='pk_test_bWFueS1oZXJtaXQtNTYuY2xlcmsuYWNjb3VudHMuZGV2JA'> */}
           {children}
-        </ClerkProvider>
+        {/* </ClerkProvider> */}
         </body>
     </html>
 )}
