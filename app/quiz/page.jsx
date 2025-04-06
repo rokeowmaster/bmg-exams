@@ -1,21 +1,24 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useRef } from "react";
 import { questions } from "@/data/questions";
 import Timer from "@/components/Timer";
 import Navbar from "@/components/Navbar";
+import html2canvas from "html2canvas";
+import { PartyPopper } from "lucide-react";
 
 export default function QuizPage() {
   const topics = Object.keys(questions);
-  const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
+  const [currentTopicIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [topicScore, setTopicScore] = useState(0);
-  const [showTopicResult, setShowTopicResult] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [topicResults, setTopicResults] = useState([]);
-  const [timerKey, setTimerKey] = useState(0);
+  const [timerKey] = useState(0);
   const [quizAlreadyTaken, setQuizAlreadyTaken] = useState(false);
+  const resultRef = useRef(null);
 
   useEffect(() => {
     const hasTakenQuiz = localStorage.getItem("bmg-quiz-taken");
@@ -30,7 +33,6 @@ export default function QuizPage() {
   const handleAnswer = (selected) => {
     const correct = currentQuestion.answer;
 
-    // Immediate score and feedback update
     if (selected === correct) {
       setScore((prev) => prev + 1);
       setTopicScore((prev) => prev + 1);
@@ -39,38 +41,57 @@ export default function QuizPage() {
       setFeedback(`❌ Incorrect! Correct answer: ${correct}`);
     }
 
-    // Batch state updates to avoid unnecessary re-renders
     setTimeout(() => {
       setFeedback("");
 
-      const isLastQuestion = currentQuestionIndex === questions[topic].length - 1;
+      const isLastQuestion =
+        currentQuestionIndex === questions[topic].length - 1;
       if (isLastQuestion) {
-        setShowTopicResult(true);
+        const updatedResults = [
+          {
+            topic,
+            score: topicScore + (selected === correct ? 1 : 0),
+            total: questions[topic].length,
+          },
+        ];
+        setTopicResults(updatedResults);
+        localStorage.setItem("bmg-quiz-taken", "true");
+        setQuizCompleted(true);
       } else {
         setCurrentQuestionIndex((prev) => prev + 1);
       }
     }, 1000);
   };
 
-  const handleNextTopic = () => {
-    const updatedResults = [...topicResults, {
-      topic,
-      score: topicScore,
-      total: questions[topic].length,
-    }];
-    setTopicResults(updatedResults);
+  const sendResultsToWhatsApp = () => {
+    html2canvas(resultRef.current).then((canvas) => {
+      // Convert canvas to image data URL
+      const imageUrl = canvas.toDataURL();
 
-    const isLastTopic = currentTopicIndex === topics.length - 1;
-    if (isLastTopic) {
-      localStorage.setItem("bmg-quiz-taken", "true");
-      setQuizCompleted(true);
-    } else {
-      setCurrentTopicIndex((prev) => prev + 1);
-      setCurrentQuestionIndex(0);
-      setTopicScore(0);
-      setShowTopicResult(false);
-      setTimerKey((prev) => prev + 1);
-    }
+      // Send the image to the backend (Twilio service)
+      fetch("/api/send-whatsapp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          imageUrl,
+          phoneNumber: "whatsapp:+254758490103", // WhatsApp number
+        }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.success) {
+            alert("Results sent to WhatsApp!");
+          } else {
+            alert("Failed to send the results.");
+          }
+        })
+        .catch((error) => {
+          console.error("Error sending results:", error);
+          alert("An error occurred while sending the results.");
+        });
+    });
   };
 
   if (quizAlreadyTaken) {
@@ -78,8 +99,12 @@ export default function QuizPage() {
       <div>
         <Navbar />
         <div className="text-center mt-10 p-6">
-          <h2 className="text-3xl font-bold mb-4 text-red-600">⛔ Quiz Already Taken</h2>
-          <p className="text-lg">You’ve already completed this quiz. Only one attempt is allowed.</p>
+          <h2 className="text-3xl font-bold mb-4 text-red-600">
+            ⛔ Quiz Already Taken
+          </h2>
+          <p className="text-lg">
+            You’ve already completed this quiz. Only one attempt is allowed.
+          </p>
         </div>
       </div>
     );
@@ -87,23 +112,37 @@ export default function QuizPage() {
 
   if (quizCompleted) {
     return (
-      <div>
+      <div className="bg-gradient-to-br from-purple-600 to-indigo-700 min-h-screen text-white">
         <Navbar />
-        <div className="text-center mt-10 p-6">
-          <h2 className="text-3xl font-bold mb-4">🎉 Final Score: {score}</h2>
-          <div className="mt-4">
+        <div
+          className="flex flex-col items-center justify-center py-16 px-6"
+          ref={resultRef}
+        >
+          <PartyPopper size={48} className="text-yellow-400 mb-4 animate-bounce" />
+          <h2 className="text-5xl font-extrabold mb-4">🎉 Topic Complete!</h2>
+          <p className="text-2xl mb-8">You completed the topic with a score of</p>
+          <div className="bg-white text-black px-8 py-6 rounded-xl shadow-2xl text-4xl font-bold mb-8">
+            {topicScore} / {questions[topic].length}
+          </div>
+
+          <div className="w-full max-w-xl bg-white text-black rounded-lg p-6 shadow-lg">
+            <h3 className="text-xl font-semibold mb-4">📊 Topic Breakdown</h3>
             {topicResults.map((res, idx) => (
-              <p key={idx} className="text-lg">
-                {res.topic}: {res.score} / {res.total}
-              </p>
+              <div key={idx} className="flex justify-between py-2 border-b">
+                <span>{res.topic}</span>
+                <span>
+                  {res.score} / {res.total}
+                </span>
+              </div>
             ))}
           </div>
-          <button
-            className="mt-6 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded shadow"
-            onClick={() => window.print()}
+
+          {/* <button
+            className="mt-10 bg-green-500 hover:bg-green-600 text-black font-semibold px-6 py-3 rounded-full shadow-lg transition"
+            onClick={sendResultsToWhatsApp}
           >
-            🏆 Download Certificate
-          </button>
+            📱 Send Results to WhatsApp
+          </button> */}
         </div>
       </div>
     );
@@ -116,37 +155,22 @@ export default function QuizPage() {
         <h2 className="text-2xl font-bold mb-2 text-black">{topic}</h2>
         <Timer key={timerKey} seconds={1800} />
 
-        {showTopicResult ? (
-          <div className="mt-8">
-            <h3 className="text-xl font-semibold text-black">Topic Complete!</h3>
-            <p className="mt-2 text-lg text-black">
-              You scored {topicScore} out of {questions[topic].length}
-            </p>
-            <button
-              onClick={handleNextTopic}
-              className="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded"
-            >
-              ➡️ Proceed to Next Topic
-            </button>
+        <div className="mt-6">
+          <p className="text-lg font-medium mb-4 text-black">
+            {currentQuestionIndex + 1}. {currentQuestion.question}
+          </p>
+          <div className="grid gap-3">
+            {currentQuestion.options.map((opt, i) => (
+              <button
+                key={i}
+                onClick={() => handleAnswer(opt)}
+                className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded transition"
+              >
+                {opt}
+              </button>
+            ))}
           </div>
-        ) : (
-          <div className="mt-6">
-            <p className="text-lg font-medium mb-4 text-black">
-              {currentQuestionIndex + 1}. {currentQuestion.question}
-            </p>
-            <div className="grid gap-3">
-              {currentQuestion.options.map((opt, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleAnswer(opt)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded transition"
-                >
-                  {opt}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
