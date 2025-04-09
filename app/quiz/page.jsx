@@ -9,25 +9,56 @@ import { PartyPopper } from "lucide-react";
 
 export default function QuizPage() {
   const topics = Object.keys(questions);
-  const [currentTopicIndex] = useState(0);
+  const [selectedTopic, setSelectedTopic] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [topicScore, setTopicScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [topicResults, setTopicResults] = useState([]);
-  const [timerKey] = useState(0);
-  const [quizAlreadyTaken, setQuizAlreadyTaken] = useState(false);
+  const [timerKey, setTimerKey] = useState(0);
+  const [completedTopics, setCompletedTopics] = useState([]);
   const resultRef = useRef(null);
 
   useEffect(() => {
-    const hasTakenQuiz = localStorage.getItem("bmg-quiz-taken");
-    if (hasTakenQuiz) {
-      setQuizAlreadyTaken(true);
+    const stored = localStorage.getItem("bmg-quiz-topics");
+    if (stored) {
+      setCompletedTopics(JSON.parse(stored));
     }
   }, []);
 
-  const topic = topics[currentTopicIndex];
+  if (!selectedTopic) {
+    return (
+      <div>
+        <Navbar />
+        <div className="p-6 max-w-3xl mx-auto text-center bg-white rounded-lg shadow mt-6">
+          <h2 className="text-2xl font-bold mb-4 text-black">Select a Topic</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {topics.map((topic, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  if (completedTopics.includes(topic)) return;
+                  setSelectedTopic(topic);
+                  setTimerKey(prev => prev + 1);
+                }}
+                disabled={completedTopics.includes(topic)}
+                className={`py-2 px-4 rounded transition text-white ${
+                  completedTopics.includes(topic)
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-blue-500 hover:bg-blue-600"
+                }`}
+              >
+                {topic} {completedTopics.includes(topic) && "(Done)"}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const topic = selectedTopic;
   const currentQuestion = questions[topic][currentQuestionIndex];
 
   const handleAnswer = (selected) => {
@@ -55,7 +86,14 @@ export default function QuizPage() {
           },
         ];
         setTopicResults(updatedResults);
-        localStorage.setItem("bmg-quiz-taken", "true");
+
+        const updatedCompletedTopics = [...completedTopics, topic];
+        setCompletedTopics(updatedCompletedTopics);
+        localStorage.setItem(
+          "bmg-quiz-topics",
+          JSON.stringify(updatedCompletedTopics)
+        );
+
         setQuizCompleted(true);
       } else {
         setCurrentQuestionIndex((prev) => prev + 1);
@@ -65,10 +103,8 @@ export default function QuizPage() {
 
   const sendResultsToWhatsApp = () => {
     html2canvas(resultRef.current).then((canvas) => {
-      // Convert canvas to image data URL
       const imageUrl = canvas.toDataURL();
 
-      // Send the image to the backend (Twilio service)
       fetch("/api/send-whatsapp", {
         method: "POST",
         headers: {
@@ -76,7 +112,7 @@ export default function QuizPage() {
         },
         body: JSON.stringify({
           imageUrl,
-          phoneNumber: "whatsapp:+254758490103", // WhatsApp number
+          phoneNumber: "whatsapp:+254758490103",
         }),
       })
         .then((response) => response.json())
@@ -93,22 +129,6 @@ export default function QuizPage() {
         });
     });
   };
-
-  if (quizAlreadyTaken) {
-    return (
-      <div>
-        <Navbar />
-        <div className="text-center mt-10 p-6">
-          <h2 className="text-3xl font-bold mb-4 text-red-600">
-            ⛔ Quiz Already Taken
-          </h2>
-          <p className="text-lg">
-            You’ve already completed this quiz. Only one attempt is allowed.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   if (quizCompleted) {
     return (
@@ -137,12 +157,12 @@ export default function QuizPage() {
             ))}
           </div>
 
-          {/* <button
+          <button
             className="mt-10 bg-green-500 hover:bg-green-600 text-black font-semibold px-6 py-3 rounded-full shadow-lg transition"
             onClick={sendResultsToWhatsApp}
           >
             📱 Send Results to WhatsApp
-          </button> */}
+          </button>
         </div>
       </div>
     );
@@ -170,6 +190,7 @@ export default function QuizPage() {
               </button>
             ))}
           </div>
+          {/* {feedback && <p className="mt-4 text-lg font-semibold">{feedback}</p>} */}
         </div>
       </div>
     </div>
