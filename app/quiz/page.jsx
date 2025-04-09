@@ -1,10 +1,8 @@
-"use client";
-
+'use client';
 import { useState, useEffect, useRef } from "react";
 import { questions } from "@/data/questions";
 import Timer from "@/components/Timer";
 import Navbar from "@/components/Navbar";
-import html2canvas from "html2canvas";
 import { PartyPopper } from "lucide-react";
 
 export default function QuizPage() {
@@ -18,7 +16,6 @@ export default function QuizPage() {
   const [topicResults, setTopicResults] = useState([]);
   const [timerKey, setTimerKey] = useState(0);
   const [completedTopics, setCompletedTopics] = useState([]);
-  const resultRef = useRef(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("bmg-quiz-topics");
@@ -43,11 +40,7 @@ export default function QuizPage() {
                   setTimerKey(prev => prev + 1);
                 }}
                 disabled={completedTopics.includes(topic)}
-                className={`py-2 px-4 rounded transition text-white ${
-                  completedTopics.includes(topic)
-                    ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-blue-500 hover:bg-blue-600"
-                }`}
+                className={`py-2 px-4 rounded transition text-white ${completedTopics.includes(topic) ? "bg-gray-400 cursor-not-allowed" : "bg-blue-500 hover:bg-blue-600"}`}
               >
                 {topic} {completedTopics.includes(topic) && "(Done)"}
               </button>
@@ -59,7 +52,12 @@ export default function QuizPage() {
   }
 
   const topic = selectedTopic;
-  const currentQuestion = questions[topic][currentQuestionIndex];
+  const currentQuestion = questions[topic]?.[currentQuestionIndex]; // Safe access
+
+  // Prevent errors if currentQuestion is undefined
+  if (!currentQuestion) {
+    return <div>Loading...</div>;
+  }
 
   const handleAnswer = (selected) => {
     const correct = currentQuestion.answer;
@@ -75,8 +73,7 @@ export default function QuizPage() {
     setTimeout(() => {
       setFeedback("");
 
-      const isLastQuestion =
-        currentQuestionIndex === questions[topic].length - 1;
+      const isLastQuestion = currentQuestionIndex === questions[topic].length - 1;
       if (isLastQuestion) {
         const updatedResults = [
           {
@@ -89,10 +86,7 @@ export default function QuizPage() {
 
         const updatedCompletedTopics = [...completedTopics, topic];
         setCompletedTopics(updatedCompletedTopics);
-        localStorage.setItem(
-          "bmg-quiz-topics",
-          JSON.stringify(updatedCompletedTopics)
-        );
+        localStorage.setItem("bmg-quiz-topics", JSON.stringify(updatedCompletedTopics));
 
         setQuizCompleted(true);
       } else {
@@ -102,42 +96,20 @@ export default function QuizPage() {
   };
 
   const sendResultsToWhatsApp = () => {
-    html2canvas(resultRef.current).then((canvas) => {
-      const imageUrl = canvas.toDataURL();
+    const resultsMessage = `I completed the topic "${selectedTopic}" with a score of ${topicScore} out of ${questions[topic].length}.`;
 
-      fetch("/api/send-whatsapp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          imageUrl,
-          phoneNumber: "whatsapp:+254758490103",
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.success) {
-            alert("Results sent to WhatsApp!");
-          } else {
-            alert("Failed to send the results.");
-          }
-        })
-        .catch((error) => {
-          console.error("Error sending results:", error);
-          alert("An error occurred while sending the results.");
-        });
-    });
+    // Construct the WhatsApp message URL
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=+254758490103&text=${encodeURIComponent(resultsMessage)}`;
+
+    // Open the WhatsApp link
+    window.open(whatsappUrl, "_blank");
   };
 
   if (quizCompleted) {
     return (
       <div className="bg-gradient-to-br from-purple-600 to-indigo-700 min-h-screen text-white">
         <Navbar />
-        <div
-          className="flex flex-col items-center justify-center py-16 px-6"
-          ref={resultRef}
-        >
+        <div className="flex flex-col items-center justify-center py-16 px-6">
           <PartyPopper size={48} className="text-yellow-400 mb-4 animate-bounce" />
           <h2 className="text-5xl font-extrabold mb-4">🎉 Topic Complete!</h2>
           <p className="text-2xl mb-8">You completed the topic with a score of</p>
@@ -150,9 +122,7 @@ export default function QuizPage() {
             {topicResults.map((res, idx) => (
               <div key={idx} className="flex justify-between py-2 border-b">
                 <span>{res.topic}</span>
-                <span>
-                  {res.score} / {res.total}
-                </span>
+                <span>{res.score} / {res.total}</span>
               </div>
             ))}
           </div>
@@ -161,7 +131,7 @@ export default function QuizPage() {
             className="mt-10 bg-green-500 hover:bg-green-600 text-black font-semibold px-6 py-3 rounded-full shadow-lg transition"
             onClick={sendResultsToWhatsApp}
           >
-            📱 Send Results to WhatsApp
+            📱 Send
           </button>
         </div>
       </div>
@@ -190,7 +160,6 @@ export default function QuizPage() {
               </button>
             ))}
           </div>
-          {/* {feedback && <p className="mt-4 text-lg font-semibold">{feedback}</p>} */}
         </div>
       </div>
     </div>
