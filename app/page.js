@@ -200,7 +200,7 @@ export default function Home() {
       </motion.section>
 
       <footer className="text-center py-6 text-gray-400 text-sm">
-        © 2025 DigiLearn College. All rights reserved.
+        © 2025 BMG College. All rights reserved.
       </footer>
     </main>
   );
